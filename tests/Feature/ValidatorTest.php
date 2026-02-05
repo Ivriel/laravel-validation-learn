@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
@@ -80,6 +81,8 @@ class ValidatorTest extends TestCase
 
     public function test_validator_multiple_rules(): void
     {
+        App::setLocale('id');
+
         $data = [
             'username' => 'Ivriel',
             'password' => 'Ivriel',
@@ -91,6 +94,33 @@ class ValidatorTest extends TestCase
         ];
 
         $validator = Validator::make($data, $rules);
+        self::assertNotNull($validator);
+        self::assertFalse($validator->passes());
+        self::assertTrue($validator->fails());
+        $message = $validator->getMessageBag();
+        Log::info($message->toJson(JSON_PRETTY_PRINT));
+    }
+
+    public function test_validator_inline_message(): void
+    {
+        $data = [
+            'username' => 'Ivriel',
+            'password' => 'Ivriel',
+        ];
+
+        $rules = [
+            'username' => 'required|email|max:100',
+            'password' => ['required', 'min:6', 'max:20'],
+        ];
+
+        $messages = [
+            'required' => ':attribute harus diisi',
+            'email' => ':attribute harus berupa email',
+            'min' => ':attribute minimal :min karakter',
+            'max' => ':attribute maksimal :max karakter',
+        ];
+
+        $validator = Validator::make($data, $rules, $messages);
         self::assertNotNull($validator);
         self::assertFalse($validator->passes());
         self::assertTrue($validator->fails());
