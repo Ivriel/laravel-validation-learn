@@ -2,6 +2,8 @@
 
 namespace Tests\Feature;
 
+use App\Rules\RegistrationRule;
+use App\Rules\Uppercase;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
@@ -151,6 +153,28 @@ class ValidatorTest extends TestCase
 
         $validator = Validator::make($data, $rules, $messages);
         self::assertNotNull($validator);
+        self::assertFalse($validator->passes());
+        self::assertTrue($validator->fails());
+        $message = $validator->getMessageBag();
+        Log::info($message->toJson(JSON_PRETTY_PRINT));
+    }
+
+    public function test_validator_custom_rule(): void
+    {
+
+        $data = [
+            'username' => 'ivriel@gmail.com',
+            'password' => 'ivriel@gmail.com',
+        ];
+
+        $rules = [
+            'username' => ['required', 'email', 'max:100', new Uppercase],
+            'password' => ['required', 'min:6', 'max:20', new RegistrationRule],
+        ];
+
+        $validator = Validator::make($data, $rules);
+        self::assertNotNull($validator);
+
         self::assertFalse($validator->passes());
         self::assertTrue($validator->fails());
         $message = $validator->getMessageBag();
